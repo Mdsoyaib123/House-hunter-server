@@ -29,9 +29,14 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    // collection
 
+    // collection
     const userCollection = client.db("House-hunters").collection("users");
+
+    const bookingCollection = client
+      .db("House-hunters")
+      .collection("bookingData");
+
     const houseDataCollection = client
       .db("House-hunters")
       .collection("houseData");
@@ -100,6 +105,12 @@ async function run() {
       const result = await houseDataCollection.find().toArray();
       res.send(result);
     });
+    app.get("/houseDetail/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await houseDataCollection.findOne(query);
+      res.send(result);
+    });
     app.get("/updateHouseData/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -112,12 +123,11 @@ async function run() {
       res.send(result);
     });
 
-
     app.put("/houseDataEdit/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
       const query = { _id: new ObjectId(id) };
-      
+
       const updateDoc = {
         $set: {
           houseName: data.houseName,
@@ -133,10 +143,9 @@ async function run() {
         },
       };
 
-      const result = await houseDataCollection.updateOne(query,updateDoc)
-      res.send(result)
+      const result = await houseDataCollection.updateOne(query, updateDoc);
+      res.send(result);
     });
-
 
     app.delete("/houseDataDelete/:id", async (req, res) => {
       const id = req.params.id;
@@ -144,6 +153,23 @@ async function run() {
       const result = await houseDataCollection.deleteOne(query);
       res.send(result);
     });
+
+    app.get('/bookingData',async(req,res)=>{
+      const result = await bookingCollection.find().toArray()
+      res.send(result)
+    })
+    app.post('/bookingData',async(req,res)=>{
+      const bookingData = req.body 
+      const result = await bookingCollection.insertOne(bookingData)
+      res.send(result)
+    })
+    
+    app.delete('/bookingData/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
