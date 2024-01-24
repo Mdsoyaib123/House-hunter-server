@@ -29,7 +29,6 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-
     // collection
     const userCollection = client.db("House-hunters").collection("users");
 
@@ -101,8 +100,19 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/houseDataCount", async (req, res) => {
+      const totalUser = await houseDataCollection.estimatedDocumentCount();
+      res.send({ totalUser });
+    });
     app.get("/houseData", async (req, res) => {
-      const result = await houseDataCollection.find().toArray();
+      const size = parseInt(req.query.size);
+      const page = parseInt(req.query.page);
+      console.log("pagination data", page, size);
+      const result = await houseDataCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
     app.get("/houseDetail/:id", async (req, res) => {
@@ -154,22 +164,28 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/bookingData',async(req,res)=>{
-      const result = await bookingCollection.find().toArray()
-      res.send(result)
-    })
-    app.post('/bookingData',async(req,res)=>{
-      const bookingData = req.body 
-      const result = await bookingCollection.insertOne(bookingData)
-      res.send(result)
-    })
-    
-    app.delete('/bookingData/:id',async(req,res)=>{
+    app.get("/bookingData", async (req, res) => {
+      const result = await bookingCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/bookingData", async (req, res) => {
+      const bookingData = req.body;
+      const maximanBooking = await bookingCollection.find().toArray();
+      if (maximanBooking.length >= 2) {
+        res.send({ message: "You can book maximum 2 house" });
+      } else {
+        const result = await bookingCollection.insertOne(bookingData);
+        res.send(result);
+      }
+    });
+
+    app.delete("/bookingData/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await bookingCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
